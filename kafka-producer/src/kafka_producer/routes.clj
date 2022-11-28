@@ -8,12 +8,12 @@
   "Echo back the request"
   [req]
   {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (-> (str "GET '/' " req))})
+   :headers {"Content-Type" "text/plain"}
+   :body (-> (req :uri))})
 
 (defn add-transaction-route
   "Endpoint for adding a transaction"
   [req]
   {:status 200
    :headers {"Content-Type" "application/json"}
-   :body (-> (api/add-transaction (req :params)))})
+   :body (-> (api/add-transaction (req :params) (get-in req [:route-params :topic])))})

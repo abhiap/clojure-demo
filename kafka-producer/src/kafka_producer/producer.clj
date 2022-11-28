@@ -5,7 +5,7 @@
     [dotenv :refer [env]]
     [clojure.tools.logging :as log])
   (:import
-    (org.apache.kafka.clients.admin AdminClient)
+    (org.apache.kafka.clients.admin AdminClient NewTopic)
     (org.apache.kafka.clients.producer Callback KafkaProducer ProducerConfig ProducerRecord)))
 
 (def -build-producer ^KafkaProducer
@@ -16,7 +16,7 @@
                         ProducerConfig/KEY_SERIALIZER_CLASS_CONFIG   "org.apache.kafka.common.serialization.StringSerializer"
                         ProducerConfig/BOOTSTRAP_SERVERS_CONFIG      (env :BOOTSTRAP_SERVER)
                         "schema.registry.url"                        (env :SCHEMA_REGISTRY_URL)}]
-    (log/debug "creating producer with config:")
+    (log/debug "creating the kafka producer")
     (log/debug producer-props)
     (KafkaProducer. producer-props)))
 
@@ -28,16 +28,16 @@
         new-topics (map (fn [^String topic-name] (NewTopic. topic-name partitions replication)) topics)]
     (.createTopics adminClient new-topics)))
 
-(defn send [key message topic]
+(defn send-msg [key message topic]
   (let [producer -build-producer
-        print-ex (comp print (partial str "Failed to deliver message: "))
-        print-metadata #(log/debugf "Sent record to topic %s partition [%d] @ offest %d"
+        print-ex (comp print (partial str "Failed to deliver message "))
+        print-metadata #(log/debugf "Sent message to topic [%s] partition [%d] @ offest [%d]"
                                     (.topic %)
                                     (.partition %)
                                     (.offset %))
         create-msg #(let [k key
                           v %]
-                      (log/debugf "Producing record: %s\t%s" k v)
+                      (log/debugf "Sending message[key value]: %s\t%s" k v)
                       (ProducerRecord. topic k v))]
 
     (create-topics! (env :BOOTSTRAP_SERVER) [topic] 3 1)
@@ -53,4 +53,4 @@
       (.send producer (create-msg message) callback)
       (.flush producer)
       )
-    (log/debugf "Message produced to topic: %s!" topic)))
+    (log/debugf "Message sent to topic: %s!" topic)))

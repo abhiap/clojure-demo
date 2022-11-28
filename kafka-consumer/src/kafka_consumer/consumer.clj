@@ -8,10 +8,24 @@
     (java.time Duration)
     (org.apache.kafka.clients.consumer ConsumerConfig KafkaConsumer)))
 
+(l/def-enum-schema trans-type-schema
+                   :credit :debit)
+
+(l/def-record-schema account-schema
+                     [:id l/int-schema]
+                     [:number l/int-schema]
+                     [:type l/string-schema]
+                     [:state l/string-schema])
+
+
 (l/def-record-schema transaction-schema
                      [:id l/int-schema]
                      [:amount l/int-schema]
-                     [:type l/string-schema])
+                     [:currency l/string-schema]
+                     [:type trans-type-schema]
+                     [:time l/string-schema]
+                     [:status l/string-schema]
+                     [:account account-schema])
 
 (def -build-consumer ^KafkaConsumer
   ;"Create the kafka consumer to receive messages"
@@ -23,20 +37,19 @@
                         ConsumerConfig/BOOTSTRAP_SERVERS_CONFIG        (env :BOOTSTRAP_SERVER)
                         "schema.registry.url"                          (env :SCHEMA_REGISTRY_URL)}]
     (log/info "building the kafka consumer")
-    (log/debug consumer-props)
     (KafkaConsumer. consumer-props)))
 
-(defn consumer! []
+(defn consumer! [topic]
   (with-open [consumer -build-consumer]
-    (.subscribe consumer [(env :DEFAULT_TOPIC)])
+    (.subscribe consumer [topic])
     (loop [tc 0
            records []]
       (let [new-tc (reduce
                      (fn [tc record]
-                       (log/debug "Receiving " (str "Processed Value: " (l/deserialize transaction-schema transaction-schema (.value record)))))
+                       (log/info "\nReceived " (str "the processed value: \n" (l/deserialize transaction-schema transaction-schema (.value record)))))
                      tc
                      records)]
-        (log/debug "Waiting for message in KafkaConsumer.poll")
+        (log/debugf "Waiting for message in topic: %s" topic)
         (recur new-tc
                (seq (.poll consumer (Duration/ofSeconds 1))))))))
 

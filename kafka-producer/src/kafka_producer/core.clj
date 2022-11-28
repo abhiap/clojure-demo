@@ -13,6 +13,7 @@
 (defroutes app-routes
            (GET "/" [] routes/echo-route)
            (POST "/transactions" [] routes/add-transaction-route)
+           (POST "/transactions/:topic" [] routes/add-transaction-route)
            (route/not-found "Error, page not found!"))
 
 (defn -main

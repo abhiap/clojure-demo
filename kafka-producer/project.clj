@@ -14,6 +14,7 @@
                  [ring/ring-defaults "0.3.4"]
                  [ring/ring-devel "1.9.6"]
                  [ring/ring-json "0.5.1"]
+                 [ring/ring-mock "0.4.0"]
                  [org.clojure/data.json "2.4.0"]
                  [lynxeyes/dotenv "1.0.2"]]
   :repositories [["io.confluent" "https://packages.confluent.io/maven/"]]
